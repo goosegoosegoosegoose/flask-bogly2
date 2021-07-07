@@ -26,7 +26,9 @@ class User(db.Model):
                            nullable=True,
                            unique=False)
 
-    image_url = db.Column(db.String(300),
+    image_url = db.Column(db.Text(),
                           nullable=True,
                           unique=False,
-                          default="https://api.time.com/wp-content/uploads/2014/09/macaca_nigra_self-portrait_rotated_and_cropped.jpg")
+                          server_default="https://news.artnet.com/app/news-upload/2015/09/c6e48da82c0e49d1a012971e652a5132-1560x2158-256x256.jpg")
+
+# can't get default to work with users made with new user form on frontend
