@@ -2,7 +2,8 @@
 
 from flask import Flask, request, redirect, render_template
 from flask_debugtoolbar import DebugToolbarExtension
-from models import db, connect_db, User
+from models import db, connect_db, User, Post
+
 
 app = Flask(__name__)
 
@@ -37,7 +38,10 @@ def create_user():
     if request.method == 'POST':
         first_name = request.form['first_name']
         last_name = request.form['last_name']
-        image_url = request.form['image_url']
+        if request.form['image_url'] == '':
+            image_url = None
+        else:
+            image_url = request.form['image_url']
 
         new_user = User(first_name=first_name, last_name=last_name, image_url=image_url)
         db.session.add(new_user)
@@ -45,7 +49,7 @@ def create_user():
 
         return redirect('/users')
     else:
-        return render_template("form.html")
+        return render_template("userform.html")
 
 
 @app.route('/users/<int:user_id>')
@@ -53,8 +57,9 @@ def user_page(user_id):
     """User information"""
 
     user = User.query.get_or_404(user_id)
+    posts = Post.query.filter(Post.user_id==user.id).all()
 
-    return render_template("userpage.html", user=user)
+    return render_template("userpage.html", user=user, posts=posts)
 
 @app.route('/users/<int:user_id>/edit', methods=["GET", "POST"])
 def edit_user(user_id):
@@ -65,13 +70,16 @@ def edit_user(user_id):
     if request.method == 'POST':
         user.first_name = request.form['first_name']
         user.last_name = request.form['last_name']
-        user.image_url = request.form['image_url']
+        if request.form['image_url'] == '':
+            user.image_url = None
+        else:
+            user.image_url = request.form['image_url']
 
         db.session.commit()
 
-        return redirect('/users')
+        return redirect(f'/users/{user.id}')
     else:
-        return render_template("edit.html", user=user)
+        return render_template("useredit.html", user=user)
 
 @app.route('/users/<int:user_id>/delete', methods=["POST"])
 def delete_user(user_id):
@@ -82,3 +90,57 @@ def delete_user(user_id):
     db.session.commit()
 
     return redirect('/users')
+
+@app.route('/users/<int:user_id>/posts/new', methods=["GET", "POST"])
+def create_post(user_id):
+    """New post form"""
+
+    user = User.query.get_or_404(user_id)
+
+    if request.method == 'POST':
+        title = request.form['title']
+        content = request.form['content']
+
+        new_post = Post(title=title, content=content, user_id=user_id)
+        db.session.add(new_post)
+        db.session.commit()
+
+        return redirect(f'/users/{user_id}')
+    else:
+        return render_template("postform.html", user=user)
+
+@app.route('/posts/<int:post_id>')
+def post_page(post_id):
+    """Show Post"""
+
+    post = Post.query.get_or_404(post_id)
+    # user = User.query.get_or_404(post.user_id)
+
+    return render_template("postpage.html", post=post)
+
+@app.route('/posts/<int:post_id>/edit', methods=['GET', 'POST'])
+def post_edit(post_id):
+    """Edit post form"""
+
+    post = Post.query.get_or_404(post_id)
+
+    if request.method == 'POST':
+        post.title = request.form['title']
+        post.content = request.form['content']
+
+        db.session.commit()
+
+        return redirect(f'/posts/{post_id}')
+    else:
+        return render_template("postedit.html", post=post)
+
+@app.route('/posts/<int:post_id>/delete', methods=['POST'])
+def delete_post(post_id):
+    """delete the post"""
+
+    post = Post.query.get_or_404(post_id)
+
+    db.session.delete(post)
+    db.session.commit()
+
+    return redirect(f'/users/{post.user_id}')
