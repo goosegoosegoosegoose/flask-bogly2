@@ -47,6 +47,6 @@ class Post(db.Model):
     title = db.Column(db.String(50), nullable=False, unique=False)
     content = db.Column(db.Text(), nullable=False, unique=False)
     created_at = db.Column(db.DateTime, nullable=False, unique=False, default=f'{now}')
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'))
     
     user = db.relationship('User')
